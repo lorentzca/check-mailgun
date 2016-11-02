@@ -1,6 +1,7 @@
 package main
 
 import (
+	//"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -46,15 +47,54 @@ type sendingDnsRecords struct {
 	Value      string
 }
 
-func main() {
+func url() string {
 	flags.Parse(&opts)
-
-	client := &http.Client{}
 	url := fmt.Sprintf("https://api.mailgun.net/v3/domains/%s", *opts.Domain)
-	req, _ := http.NewRequest("GET", url, nil)
+
+	return url
+}
+
+func httpRequest() string {
+	client := &http.Client{}
+	url := url()
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Println(err)
+	}
 	req.SetBasicAuth("api", *opts.Apikey)
-	res, _ := client.Do(req)
-	body, _ := ioutil.ReadAll(res.Body)
+
+	return req
+}
+
+func httpResponse() string {
+	req := httpRequest()
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return res
+}
+
+func httpBody() string {
+	res := httpRequest()
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+	}
 	defer res.Body.Close()
+
+	return body
+}
+
+func main() {
+	body := httpBody()
 	fmt.Println(string(body))
+
+	//jsonStr := json.NewDecoder(res.Body)
+	//fmt.Println(res.Body)
+	//d := data
+	//jsonStr.Decode(&d)
+	//fmt.Println("%+v\n", d.Domain)
 }
