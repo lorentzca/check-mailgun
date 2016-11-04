@@ -1,7 +1,7 @@
 package main
 
 import (
-	//"encoding/json"
+	_ "encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -54,7 +54,7 @@ func url() string {
 	return url
 }
 
-func httpRequest() string {
+func httpBody() string {
 	client := &http.Client{}
 	url := url()
 
@@ -64,36 +64,26 @@ func httpRequest() string {
 	}
 	req.SetBasicAuth("api", *opts.Apikey)
 
-	return req
-}
-
-func httpResponse() string {
-	req := httpRequest()
-	res, err := client.Do(req)
-	if err != nil {
+	res, err2 := client.Do(req)
+	if err2 != nil {
 		fmt.Println(err)
 	}
 
-	return res
-}
-
-func httpBody() string {
-	res := httpRequest()
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
+	body, err3 := ioutil.ReadAll(res.Body)
+	if err3 != nil {
 		fmt.Println(err)
 	}
 	defer res.Body.Close()
 
-	return body
+	return string(body)
 }
 
 func main() {
 	body := httpBody()
-	fmt.Println(string(body))
+	fmt.Println(body)
 
-	//jsonStr := json.NewDecoder(res.Body)
-	//fmt.Println(res.Body)
+	//jsonStr := json.NewDecoder(body)
+	//fmt.Println(body)
 	//d := data
 	//jsonStr.Decode(&d)
 	//fmt.Println("%+v\n", d.Domain)
