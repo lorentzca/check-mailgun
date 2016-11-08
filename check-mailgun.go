@@ -14,37 +14,34 @@ var opts struct {
 	Domain *string `short:"d" long:"domain" required:"true" description:"Mailgun Domain"`
 }
 
-func url() string {
+func mailgunEndPoint() string {
 	flags.Parse(&opts)
 	url := fmt.Sprintf("https://api.mailgun.net/v3/domains/%s", *opts.Domain)
 
 	return url
 }
 
-func httpBody() []byte {
+func mailgunState() string {
 	client := &http.Client{}
 
-	req, err := http.NewRequest("GET", url(), nil)
+	req, err := http.NewRequest("GET", mailgunEndPoint(), nil)
 	if err != nil {
 		fmt.Println(err)
 	}
+
 	req.SetBasicAuth("api", *opts.Apikey)
 
-	res, err2 := client.Do(req)
-	if err2 != nil {
+	res, err := client.Do(req)
+	if err != nil {
 		fmt.Println(err)
 	}
 
-	body, err3 := ioutil.ReadAll(res.Body)
-	if err3 != nil {
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
 		fmt.Println(err)
 	}
 	defer res.Body.Close()
 
-	return body
-}
-
-func main() {
 	type domain struct {
 		State string
 	}
@@ -53,9 +50,12 @@ func main() {
 		Domain domain
 	}
 
-	body := httpBody()
-
 	var d data
 	json.Unmarshal(body, &d)
-	fmt.Println(d.Domain.State)
+
+	return d.Domain.State
+}
+
+func main() {
+	fmt.Println(mailgunState())
 }
