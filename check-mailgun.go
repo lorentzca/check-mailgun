@@ -1,7 +1,7 @@
 package main
 
 import (
-	_ "encoding/json"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -14,39 +14,6 @@ var opts struct {
 	Domain *string `short:"d" long:"domain" required:"true" description:"Mailgun Domain"`
 }
 
-type data struct {
-	Domain              domain
-	ReceivingDnsRecords []receivingDnsRecords `json:"receiving_dns_records"`
-	SendingDnsRecords   []sendingDnsRecords   `json:"sending_dns_records"`
-}
-
-type domain struct {
-	CreatedAt        string `json:"created_at"`
-	Name             string
-	RequireTls       string `json:"require_tls"`
-	SkipVerification string `json:"skip_verification"`
-	SmtpLogin        string `json:"smtp_login"`
-	SmtpPassword     string `json:"smtp_password"`
-	SpamAction       string `json:"spam_action"`
-	State            string
-	Type             string
-	Wildcard         string
-}
-
-type receivingDnsRecords struct {
-	Priority   string
-	RecordType string `json:"record_type"`
-	Valid      string
-	Value      string
-}
-
-type sendingDnsRecords struct {
-	Name       string
-	RecordType string `json:"record_type"`
-	Valid      string
-	Value      string
-}
-
 func url() string {
 	flags.Parse(&opts)
 	url := fmt.Sprintf("https://api.mailgun.net/v3/domains/%s", *opts.Domain)
@@ -54,11 +21,10 @@ func url() string {
 	return url
 }
 
-func httpBody() string {
+func httpBody() []byte {
 	client := &http.Client{}
-	url := url()
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", url(), nil)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -75,16 +41,21 @@ func httpBody() string {
 	}
 	defer res.Body.Close()
 
-	return string(body)
+	return body
 }
 
 func main() {
-	body := httpBody()
-	fmt.Println(body)
+	type domain struct {
+		State string
+	}
 
-	//jsonStr := json.NewDecoder(body)
-	//fmt.Println(body)
-	//d := data
-	//jsonStr.Decode(&d)
-	//fmt.Println("%+v\n", d.Domain)
+	type data struct {
+		Domain domain
+	}
+
+	body := httpBody()
+
+	var d data
+	json.Unmarshal(body, &d)
+	fmt.Println(d.Domain.State)
 }
