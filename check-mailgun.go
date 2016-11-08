@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -13,48 +14,48 @@ var opts struct {
 	Domain *string `short:"d" long:"domain" required:"true" description:"Mailgun Domain"`
 }
 
-type data struct {
-	Domain              domain
-	ReceivingDnsRecords []receivingDnsRecords `json:"receiving_dns_records"`
-	SendingDnsRecords   []sendingDnsRecords   `json:"sending_dns_records"`
+func mailgunEndPoint() string {
+	flags.Parse(&opts)
+	url := fmt.Sprintf("https://api.mailgun.net/v3/domains/%s", *opts.Domain)
+
+	return url
 }
 
-type domain struct {
-	CreatedAt        string `json:"created_at"`
-	Name             string
-	RequireTls       string `json:"require_tls"`
-	SkipVerification string `json:"skip_verification"`
-	SmtpLogin        string `json:"smtp_login"`
-	SmtpPassword     string `json:"smtp_password"`
-	SpamAction       string `json:"spam_action"`
-	State            string
-	Type             string
-	Wildcard         string
-}
+func mailgunState() string {
+	client := &http.Client{}
 
-type receivingDnsRecords struct {
-	Priority   string
-	RecordType string `json:"record_type"`
-	Valid      string
-	Value      string
-}
+	req, err := http.NewRequest("GET", mailgunEndPoint(), nil)
+	if err != nil {
+		fmt.Println(err)
+	}
 
-type sendingDnsRecords struct {
-	Name       string
-	RecordType string `json:"record_type"`
-	Valid      string
-	Value      string
+	req.SetBasicAuth("api", *opts.Apikey)
+
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer res.Body.Close()
+
+	type domain struct {
+		State string
+	}
+
+	type data struct {
+		Domain domain
+	}
+
+	var d data
+	json.Unmarshal(body, &d)
+
+	return d.Domain.State
 }
 
 func main() {
-	flags.Parse(&opts)
-
-	client := &http.Client{}
-	url := fmt.Sprintf("https://api.mailgun.net/v3/domains/%s", *opts.Domain)
-	req, _ := http.NewRequest("GET", url, nil)
-	req.SetBasicAuth("api", *opts.Apikey)
-	res, _ := client.Do(req)
-	body, _ := ioutil.ReadAll(res.Body)
-	defer res.Body.Close()
-	fmt.Println(string(body))
+	fmt.Println(mailgunState())
 }
