@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/jessevdk/go-flags"
+	"github.com/mackerelio/checkers"
 )
 
 var opts struct {
@@ -21,7 +22,7 @@ func mailgunEndPoint() string {
 	return url
 }
 
-func mailgunState() string {
+func getMailgunState() string {
 	client := &http.Client{}
 
 	req, err := http.NewRequest("GET", mailgunEndPoint(), nil)
@@ -56,6 +57,20 @@ func mailgunState() string {
 	return d.Domain.State
 }
 
+func run() *checkers.Checker {
+	st := getMailgunState()
+
+	checkSt := checkers.OK
+	if st != "active" {
+		checkSt = checkers.CRITICAL
+	}
+
+	msg := fmt.Sprintf("%s is %s\n", *opts.Domain, st)
+	return checkers.NewChecker(checkSt, msg)
+}
+
 func main() {
-	fmt.Println(mailgunState())
+	ckr := run()
+	ckr.Name = "State"
+	ckr.Exit()
 }
