@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/jessevdk/go-flags"
 	"github.com/mackerelio/checkers"
@@ -16,7 +17,10 @@ var opts struct {
 }
 
 func mailgunEndPoint() string {
-	flags.Parse(&opts)
+	_, err := flags.Parse(&opts)
+	if err != nil {
+		os.Exit(1)
+	}
 	url := fmt.Sprintf("https://api.mailgun.net/v3/domains/%s", *opts.Domain)
 
 	return url
@@ -63,6 +67,8 @@ func run() *checkers.Checker {
 	checkSt := checkers.OK
 	if st != "active" {
 		checkSt = checkers.CRITICAL
+		msg := fmt.Sprintf("%s is dead\n", *opts.Domain)
+		return checkers.NewChecker(checkSt, msg)
 	}
 
 	msg := fmt.Sprintf("%s is %s\n", *opts.Domain, st)
