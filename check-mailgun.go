@@ -67,6 +67,8 @@ func run() *checkers.Checker {
 	checkSt := checkers.OK
 	if st != "active" {
 		checkSt = checkers.CRITICAL
+		msg := fmt.Sprintf("%s is dead\n", *opts.Domain)
+		return checkers.NewChecker(checkSt, msg)
 	}
 
 	msg := fmt.Sprintf("%s is %s\n", *opts.Domain, st)
