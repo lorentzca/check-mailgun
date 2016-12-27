@@ -16,6 +16,14 @@ var opts struct {
 	Domain *string `short:"d" long:"domain" required:"true" description:"Mailgun Domain"`
 }
 
+type domain struct {
+	State string
+}
+
+type data struct {
+	Domain domain
+}
+
 func mailgunEndPoint() string {
 	_, err := flags.Parse(&opts)
 	if err != nil {
@@ -46,14 +54,6 @@ func getMailgunState() string {
 		fmt.Println(err)
 	}
 	defer res.Body.Close()
-
-	type domain struct {
-		State string
-	}
-
-	type data struct {
-		Domain domain
-	}
 
 	var d data
 	json.Unmarshal(body, &d)
